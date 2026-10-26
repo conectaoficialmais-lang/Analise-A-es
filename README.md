@@ -145,8 +145,14 @@ roda `npm test` antes de publicar — se a conta do aplicativo deixar de bater c
 planilha, o site não sobe.
 
 Falta um passo manual, uma vez só: em **Settings → Pages**, escolha
-*Source: **GitHub Actions***. Sem isso o job `publicar` falha com `Get Pages site failed`;
-é só refazer a execução depois de configurar.
+*Source: **GitHub Actions***. Depois, em **Actions**, use *Re-run all jobs* na última
+execução.
+
+Sem esse passo o job `publicar` falha com `Get Pages site failed`. Não dá para
+automatizar: o `GITHUB_TOKEN` padrão não tem permissão para criar o site do Pages
+pela API — com `enablement: true` o erro vira
+`Resource not accessible by integration`. O job `testar` passa normalmente nos dois
+casos, então a falha é só de publicação, nunca de cálculo.
 
 O site sai em <https://conectaoficialmais-lang.github.io/Analise-A-es/>.
 Pages gratuito exige repositório público.
