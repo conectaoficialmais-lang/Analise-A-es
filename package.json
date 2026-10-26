@@ -1,0 +1,14 @@
+{
+  "name": "preco-justo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Calculadora de preço justo de ações da B3 pelo método patrimonial, feita a partir da planilha PREÇO JUSTO.xlsx",
+  "scripts": {
+    "test": "node tools/testar.js && node tools/verificar-fidelidade.js",
+    "dados": "node tools/build-dataset.js",
+    "start": "node tools/servidor.js"
+  },
+  "keywords": ["b3", "acoes", "valuation", "preco-justo", "patrimonio-liquido"],
+  "license": "MIT",
+  "engines": { "node": ">=18" }
+}

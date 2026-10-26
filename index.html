@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Preço Justo</title>
+<meta name="description" content="Calculadora de preço justo de ações pelo método patrimonial: patrimônio líquido + ativo circulante + caixa − dívida líquida, dividido pelo total de papéis.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚖️</text></svg>">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-faixa">
+    <div class="marca">
+      <span class="marca-icone" aria-hidden="true">⚖</span>
+      <div>
+        <h1>Preço Justo</h1>
+        <p class="marca-sub">Valuation patrimonial de ações da B3</p>
+      </div>
+    </div>
+    <div class="topo-acoes">
+      <button id="btn-tema" class="btn btn-fantasma" type="button" title="Alternar tema">
+        <span data-tema-icone>◐</span><span class="so-desktop">Tema</span>
+      </button>
+    </div>
+  </div>
+
+  <nav class="abas" role="tablist">
+    <button class="aba ativa" role="tab" data-aba="calculadora">Calculadora</button>
+    <button class="aba" role="tab" data-aba="ranking">Ranking</button>
+    <button class="aba" role="tab" data-aba="metodologia">Metodologia</button>
+  </nav>
+</header>
+
+<main>
+
+<!-- ============================================================ CALCULADORA -->
+<section id="painel-calculadora" class="painel ativo" role="tabpanel">
+
+  <div class="grade-calc">
+
+    <form id="form-calc" class="cartao" autocomplete="off">
+      <div class="cartao-cabeca">
+        <h2>Dados do balanço</h2>
+        <div class="carregar">
+          <label class="rotulo-mini" for="busca-empresa">Carregar empresa</label>
+          <div class="linha-carregar">
+            <input id="busca-empresa" type="search" list="lista-empresas" placeholder="ex.: PETR3, VALE3, WEGE3…" spellcheck="false">
+            <datalist id="lista-empresas"></datalist>
+            <button id="btn-carregar" class="btn btn-fantasma" type="button">Carregar</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="campos">
+        <div class="campo">
+          <label for="in-codigo">Código</label>
+          <input id="in-codigo" type="text" placeholder="PETR3" spellcheck="false" maxlength="10">
+        </div>
+        <div class="campo">
+          <label for="in-empresa">Empresa</label>
+          <input id="in-empresa" type="text" placeholder="Petrobras" spellcheck="false">
+        </div>
+        <div class="campo">
+          <label for="in-setor">Grupo</label>
+          <select id="in-setor">
+            <option value="Geral">Geral</option>
+            <option value="Energia">Energia</option>
+            <option value="Outro">Outro</option>
+          </select>
+        </div>
+      </div>
+
+      <h3 class="titulo-bloco">
+        Contas do balanço
+        <span class="dica" title="Aceita 410545000000, 410.545.000.000 ou 410,5 bi">aceita ponto, vírgula e sufixo “mi”/“bi”</span>
+      </h3>
+
+      <div class="campos">
+        <div class="campo">
+          <label for="in-pl">Patrimônio líquido <span class="sinal mais">+</span></label>
+          <input id="in-pl" class="num" data-conta inputmode="decimal" placeholder="0">
+          <small class="eco" data-eco-de="in-pl">—</small>
+        </div>
+        <div class="campo">
+          <label for="in-ac">Ativo circulante <span class="sinal mais">+</span></label>
+          <input id="in-ac" class="num" data-conta inputmode="decimal" placeholder="0">
+          <small class="eco" data-eco-de="in-ac">—</small>
+        </div>
+        <div class="campo">
+          <label for="in-caixa">Disponibilidade (caixa) <span class="sinal mais">+</span></label>
+          <input id="in-caixa" class="num" data-conta inputmode="decimal" placeholder="0">
+          <small class="eco" data-eco-de="in-caixa">—</small>
+        </div>
+        <div class="campo">
+          <label for="in-divida">Dívida líquida <span class="sinal menos">−</span></label>
+          <input id="in-divida" class="num" data-conta inputmode="decimal" placeholder="0">
+          <small class="eco" data-eco-de="in-divida">—</small>
+        </div>
+        <div class="campo campo-destaque">
+          <label for="in-papeis">Total de papéis</label>
+          <input id="in-papeis" class="num" data-conta inputmode="decimal" placeholder="0">
+          <small class="eco" data-eco-de="in-papeis">—</small>
+        </div>
+      </div>
+
+      <h3 class="titulo-bloco">Opcionais <span class="dica">para margem de segurança e múltiplos</span></h3>
+
+      <div class="campos">
+        <div class="campo">
+          <label for="in-preco">Preço de hoje (R$)</label>
+          <input id="in-preco" class="num" inputmode="decimal" placeholder="0,00">
+        </div>
+        <div class="campo">
+          <label for="in-lucro">Lucro líquido (12 meses)</label>
+          <input id="in-lucro" class="num" inputmode="decimal" placeholder="0">
+          <small class="eco" data-eco-de="in-lucro">—</small>
+        </div>
+        <div class="campo">
+          <label for="in-dy">Dividend yield (%)</label>
+          <input id="in-dy" class="num" inputmode="decimal" placeholder="0,00">
+        </div>
+      </div>
+
+      <div class="barra-botoes">
+        <button id="btn-salvar" class="btn btn-primario" type="button">Salvar na minha lista</button>
+        <button id="btn-limpar" class="btn btn-fantasma" type="button">Limpar</button>
+        <button id="btn-excluir" class="btn btn-perigo" type="button" hidden>Excluir</button>
+      </div>
+      <p id="aviso-calc" class="aviso" hidden></p>
+    </form>
+
+    <div class="coluna-resultado">
+
+      <div class="cartao cartao-resultado">
+        <div class="resultado-topo">
+          <span class="rotulo-mini">Preço justo por ação</span>
+          <output id="out-preco-justo" class="numero-gigante">—</output>
+          <div id="out-veredito" class="veredito" hidden></div>
+        </div>
+
+        <dl class="lista-kpi">
+          <div><dt>Valor real da empresa</dt><dd id="out-valor-real">—</dd></div>
+          <div><dt>Preço de hoje</dt><dd id="out-preco">—</dd></div>
+          <div><dt>Margem de segurança</dt><dd id="out-margem">—</dd></div>
+        </dl>
+      </div>
+
+      <div class="cartao">
+        <h3 class="titulo-bloco sem-topo">Como o valor real se forma</h3>
+        <div id="grafico-composicao" class="composicao">
+          <p class="vazio">Preencha as contas do balanço para ver a composição.</p>
+        </div>
+      </div>
+
+      <div class="cartao">
+        <h3 class="titulo-bloco sem-topo">Múltiplos derivados</h3>
+        <dl class="lista-kpi lista-kpi-2col">
+          <div><dt>VPA <span class="dica-inline">PL ÷ papéis</span></dt><dd id="out-vpa">—</dd></div>
+          <div><dt>P/VP <span class="dica-inline">preço ÷ VPA</span></dt><dd id="out-pvp">—</dd></div>
+          <div><dt>LPA <span class="dica-inline">lucro ÷ papéis</span></dt><dd id="out-lpa">—</dd></div>
+          <div><dt>P/L <span class="dica-inline">preço ÷ LPA</span></dt><dd id="out-pl">—</dd></div>
+          <div><dt>Dividend yield</dt><dd id="out-dy">—</dd></div>
+          <div><dt>Valor de mercado</dt><dd id="out-mercado">—</dd></div>
+        </dl>
+        <p class="nota-pequena">
+          Na planilha original LPA, P/L, VPA e P/VP eram digitados à mão. Aqui eles são
+          calculados a partir das contas acima — podem divergir do que estava anotado.
+        </p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ RANKING -->
+<section id="painel-ranking" class="painel" role="tabpanel">
+
+  <div class="cartao">
+    <div class="filtros">
+      <div class="campo campo-busca">
+        <label class="rotulo-mini" for="filtro-busca">Buscar</label>
+        <input id="filtro-busca" type="search" placeholder="código ou nome" spellcheck="false">
+      </div>
+      <div class="campo">
+        <label class="rotulo-mini" for="filtro-setor">Grupo</label>
+        <select id="filtro-setor">
+          <option value="">Todos</option>
+        </select>
+      </div>
+      <div class="campo">
+        <label class="rotulo-mini" for="filtro-dados">Dados</label>
+        <select id="filtro-dados">
+          <option value="completas">Só com balanço completo</option>
+          <option value="todas">Todas</option>
+          <option value="incompletas">Só incompletas</option>
+        </select>
+      </div>
+      <div class="campo campo-acoes">
+        <label class="rotulo-mini">Arquivo</label>
+        <div class="linha-carregar">
+          <button id="btn-exportar" class="btn btn-fantasma" type="button">Exportar CSV</button>
+          <label class="btn btn-fantasma" for="arq-importar">Importar CSV</label>
+          <input id="arq-importar" type="file" accept=".csv,text/csv" hidden>
+        </div>
+      </div>
+    </div>
+
+    <p id="resumo-ranking" class="resumo">—</p>
+
+    <div class="rolagem-tabela">
+      <table id="tabela" class="tabela">
+        <thead>
+          <tr>
+            <th data-ordenar="codigo" class="th-ord">Código</th>
+            <th data-ordenar="empresa" class="th-ord">Empresa</th>
+            <th data-ordenar="precoJusto" class="th-ord num">Preço justo</th>
+            <th data-ordenar="preco" class="th-ord num">Preço hoje</th>
+            <th data-ordenar="margem" class="th-ord num">Margem de segurança</th>
+            <th data-ordenar="valorReal" class="th-ord num">Valor real</th>
+            <th data-ordenar="totalPapeis" class="th-ord num">Papéis</th>
+            <th data-ordenar="setor" class="th-ord">Grupo</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="rodape-tabela">
+      <button id="btn-restaurar" class="btn btn-perigo btn-pequeno" type="button">
+        Restaurar dados da planilha
+      </button>
+      <span class="nota-pequena">Apaga suas edições e volta ao que estava no Excel.</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ METODOLOGIA -->
+<section id="painel-metodologia" class="painel" role="tabpanel">
+  <div class="cartao prosa">
+    <h2>De onde vêm as contas</h2>
+    <p>
+      Este aplicativo reproduz, sem mudar nada, as duas fórmulas da planilha
+      <strong>PREÇO JUSTO.xlsx</strong>. Não há “melhoria” de modelo aqui: a conta é
+      exatamente a que estava nas colunas H e I da planilha.
+    </p>
+
+    <div class="formula">
+      <span class="formula-titulo">Valor real da empresa</span>
+      <code>patrimônio líquido + ativo circulante + disponibilidade (caixa) − dívida líquida</code>
+    </div>
+
+    <div class="formula">
+      <span class="formula-titulo">Preço justo por ação</span>
+      <code>valor real ÷ total de papéis</code>
+    </div>
+
+    <h3>Margem de segurança</h3>
+    <p>
+      Essa é a única conta que o aplicativo acrescenta, porque a planilha não tinha
+      coluna de preço na aba principal:
+    </p>
+    <div class="formula">
+      <code>(preço justo ÷ preço de hoje) − 1</code>
+    </div>
+    <p>
+      Positiva, a ação está sendo negociada abaixo do valor patrimonial calculado.
+      Negativa, acima.
+    </p>
+
+    <h3>Uma ressalva honesta sobre a fórmula</h3>
+    <p>
+      Vale registrar: a disponibilidade (caixa) normalmente já está dentro do ativo
+      circulante, e o patrimônio líquido já é o ativo menos o passivo. Então somar as
+      três contas e subtrair a dívida conta o caixa duas vezes e mistura estoque com
+      fluxo. O resultado é um teto generoso, não um valor contábil estrito.
+    </p>
+    <p>
+      Mantivemos a conta como está na planilha, de propósito — é esse o critério que
+      você usa. Só não trate o número como “valor patrimonial” no sentido contábil.
+    </p>
+
+    <h3>Os dados que já vêm carregados</h3>
+    <p id="meta-dados">—</p>
+    <ul id="meta-avisos" class="lista-avisos"></ul>
+
+    <h3>Onde a planilha estava furada</h3>
+    <ul>
+      <li>
+        Em várias linhas as colunas <em>código</em> e <em>empresa</em> estavam trocadas
+        (BRASKEN/BRKM3, CIELO/CIEL3, COPEL/CPLE3, ENERGISA/ENGI3, ENEVA/ENEV3,
+        BRMALLS/BRML3, RUMO/RAIL3). O importador desvira.
+      </li>
+      <li>
+        Na aba ENERGIA, 28 das 32 empresas tinham só o patrimônio líquido e nenhum
+        total de papéis — por isso a coluna de preço justo dava <code>#DIV/0!</code>.
+        Elas entram marcadas como incompletas, sem preço justo inventado.
+      </li>
+      <li>
+        O preço da aba ENERGIA vinha de <code>GOOGLEFINANCE</code>. Como aqui não há
+        planilha para recalcular, ficou o último valor em cache — é uma cotação antiga,
+        não a de hoje. Digite o preço atual na calculadora para a margem valer algo.
+      </li>
+      <li>
+        O dividend yield da TAEE3 estava escrito <code>10,13,%</code> e o da CEBR3 como
+        105,35%. Foram importados assim mesmo, sinalizados.
+      </li>
+      <li>
+        BBAS3 aparecia duas vezes com balanços diferentes; ficou o mais recente,
+        com nota. TRPL3 aparecia duas vezes com os mesmos números; ficou um.
+      </li>
+    </ul>
+
+    <h3>Conferência</h3>
+    <p>
+      O importador recalcula o preço justo de todas as linhas que a planilha conseguia
+      calcular e compara com o valor que o Excel tinha em cache. Hoje são
+      <strong id="meta-conferidas">—</strong> linhas conferidas, todas batendo.
+      Rode <code>node tools/verificar-fidelidade.js</code> para repetir o teste.
+    </p>
+  </div>
+</section>
+
+</main>
+
+<footer class="pe">
+  <p>
+    Feito a partir da planilha <strong>PREÇO JUSTO.xlsx</strong>.
+    Conteúdo de estudo — não é recomendação de compra ou venda de ativos.
+  </p>
+</footer>
+
+<script src="assets/app.js"></script>
+</body>
+</html>

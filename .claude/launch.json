@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "preco-justo",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["tools/servidor.js", "4173"],
+      "port": 4173
+    }
+  ]
+}
