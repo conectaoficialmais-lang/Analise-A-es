@@ -140,9 +140,16 @@ tools/servidor.js              servidor estático local
 
 ## Publicando no GitHub Pages
 
-O repositório já traz [`.github/workflows/pages.yml`](.github/workflows/pages.yml).
-Em **Settings → Pages**, escolha *Source: GitHub Actions*. O site sai em
-`https://<usuário>.github.io/preco-justo/`. Pages gratuito exige repositório público.
+O repositório já traz [`.github/workflows/pages.yml`](.github/workflows/pages.yml), que
+roda `npm test` antes de publicar — se a conta do aplicativo deixar de bater com a
+planilha, o site não sobe.
+
+Falta um passo manual, uma vez só: em **Settings → Pages**, escolha
+*Source: **GitHub Actions***. Sem isso o job `publicar` falha com `Get Pages site failed`;
+é só refazer a execução depois de configurar.
+
+O site sai em <https://conectaoficialmais-lang.github.io/Analise-A-es/>.
+Pages gratuito exige repositório público.
 
 ---
 
