@@ -15,17 +15,8 @@ const path = require('path');
 
 const dataset = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'empresas.json'), 'utf8'));
 
-/* --- a mesma conta que roda no navegador (assets/app.js -> calcular) ------ */
-function calcular(e) {
-  const contas = [e.patrimonioLiquido, e.ativoCirculante, e.caixa, e.dividaLiquida];
-  const temBalanco = contas.every((v) => typeof v === 'number' && Number.isFinite(v));
-  const valorReal = temBalanco
-    ? e.patrimonioLiquido + e.ativoCirculante + e.caixa - e.dividaLiquida
-    : null;
-  const papeis = typeof e.totalPapeis === 'number' && e.totalPapeis > 0 ? e.totalPapeis : null;
-  const precoJusto = valorReal !== null && papeis ? valorReal / papeis : null;
-  return { valorReal, precoJusto, completa: temBalanco && !!papeis };
-}
+// a MESMA funcao que roda no navegador, nao uma copia dela
+const { calcular } = require('../assets/app.js');
 
 /* --- amostras anotadas a mao direto das celulas da planilha --------------- */
 const AMOSTRAS = [

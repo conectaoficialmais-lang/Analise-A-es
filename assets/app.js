@@ -243,7 +243,11 @@ function escreverFormulario(e) {
   campo('in-codigo').value = e.codigo || '';
   campo('in-empresa').value = e.empresa || '';
   campo('in-setor').value = ['Geral', 'Energia'].includes(e.setor) ? e.setor : 'Outro';
-  const posNum = (id, v) => { campo(id).value = v === null || v === undefined ? '' : String(v); };
+  // escreve em pt-BR; "12.345" relido daria 12345, então o decimal vai com vírgula
+  const posNum = (id, v) => {
+    campo(id).value =
+      v === null || v === undefined || !Number.isFinite(v) ? '' : String(v).replace('.', ',');
+  };
   posNum('in-pl', e.patrimonioLiquido);
   posNum('in-ac', e.ativoCirculante);
   posNum('in-caixa', e.caixa);
@@ -357,30 +361,72 @@ function atualizar() {
   campo('btn-excluir').hidden = !estado.idAtual;
 }
 
-function carregarEmpresa(texto) {
+/**
+ * Procura uma empresa pelo que foi digitado.
+ * Vários códigos aparecem nas duas abas da planilha (ELET3, CPLE3, TAEE3,
+ * ALUP3, ENGI3, TRPL3) — entre duas com o mesmo código, vale a que tem
+ * balanço completo, senão a busca traz a versão sem preço justo.
+ */
+function procurarEmpresa(texto) {
   const busca = String(texto || '').trim().toLowerCase();
-  if (!busca) return;
+  if (!busca) return null;
 
-  const achada =
-    estado.empresas.find((e) => e.codigo.toLowerCase() === busca) ||
-    estado.empresas.find((e) => (e.codigo + ' — ' + e.empresa).toLowerCase() === busca) ||
-    estado.empresas.find((e) => e.codigo.toLowerCase().startsWith(busca)) ||
-    estado.empresas.find((e) => (e.empresa || '').toLowerCase().includes(busca));
+  const melhor = (lista) => lista.find((e) => e.completa) || lista[0] || null;
 
+  const porCodigo = estado.empresas.filter((e) => e.codigo.toLowerCase() === busca);
+  if (porCodigo.length) return melhor(porCodigo);
+
+  const porPrefixo = estado.empresas.filter((e) => e.codigo.toLowerCase().startsWith(busca));
+  if (porPrefixo.length) return melhor(porPrefixo);
+
+  const porNome = estado.empresas.filter((e) => (e.empresa || '').toLowerCase().includes(busca));
+  return melhor(porNome);
+}
+
+/** Põe a empresa no formulário e diz o que há de ressalva nela. */
+/**
+ * A aba ENERGIA tinha alguns múltiplos digitados à mão. Mostra o que estava
+ * anotado — vem de `e.anotado`, não dos campos calculados de mesmo nome.
+ */
+function mostrarAnotados(e) {
+  const el = campo('anotado-planilha');
+  const a = e.anotado || {};
+  const itens = [
+    ['LPA', a.lpa, moeda],
+    ['P/L', a.pl, mult],
+    ['VPA', a.vpa, moeda],
+    ['P/VP', a.pvp, mult],
+  ].filter(([, v]) => typeof v === 'number' && Number.isFinite(v));
+
+  if (!itens.length) { el.hidden = true; return; }
+  el.innerHTML =
+    `<strong>Anotado à mão na planilha para ${e.codigo}:</strong> ` +
+    itens.map(([nome, v, f]) => `${nome} ${f(v)}`).join(' · ');
+  el.hidden = false;
+}
+
+function abrirEmpresa(e) {
+  estado.idAtual = e.id;
+  escreverFormulario(e);
+  mostrarAnotados(e);
+
+  const partes = [];
+  if (!e.completa) partes.push('faltam dados do balanço nessa linha da planilha');
+  if (e.fonte === 'ENERGIA' && e.preco && !e.editada && !e.minha) {
+    partes.push('o preço é a cotação antiga em cache do GOOGLEFINANCE');
+  }
+  if (e.obs) partes.push(e.obs);
+  aviso(partes.length ? `${e.codigo}: ${partes.join('; ')}.` : `${e.codigo} carregada.`, !partes.length);
+}
+
+function carregarEmpresa(texto) {
+  if (!String(texto || '').trim()) return;
+  const achada = procurarEmpresa(texto);
   if (!achada) {
     aviso(`Não encontrei "${texto}" na lista. Você pode digitar as contas e salvar como empresa nova.`);
     return;
   }
-
-  estado.idAtual = achada.id;
-  escreverFormulario(achada);
-  const partes = [];
-  if (!achada.completa) partes.push('faltam dados do balanço nessa linha da planilha');
-  if (achada.fonte === 'ENERGIA' && achada.preco && !achada.editada && !achada.minha) {
-    partes.push('o preço é a cotação antiga em cache do GOOGLEFINANCE');
-  }
-  if (achada.obs) partes.push(achada.obs);
-  aviso(partes.length ? `${achada.codigo}: ${partes.join('; ')}.` : `${achada.codigo} carregada.`, !partes.length);
+  abrirEmpresa(achada);
 }
 
 function salvar() {
@@ -440,6 +486,7 @@ function limpar() {
   estado.idAtual = null;
   document.getElementById('form-calc').reset();
   campo('in-setor').value = 'Geral';
+  campo('anotado-planilha').hidden = true;
   aviso(null);
   atualizar();
 }
@@ -447,11 +494,20 @@ function limpar() {
 /* ----------------------------------------------------------------- ranking */
 
 function preencherDatalist() {
+  // um código por sugestão, mesmo que ele apareça nas duas abas da planilha
+  const porCodigo = new Map();
+  for (const e of estado.empresas) {
+    const atual = porCodigo.get(e.codigo);
+    if (!atual || (e.completa && !atual.completa)) porCodigo.set(e.codigo, e);
+  }
+
   const dl = document.getElementById('lista-empresas');
-  dl.innerHTML = estado.empresas
-    .slice()
+  dl.innerHTML = Array.from(porCodigo.values())
     .sort((a, b) => a.codigo.localeCompare(b.codigo))
-    .map((e) => `<option value="${e.codigo}">${(e.empresa || '').replace(/"/g, '')}</option>`)
+    .map((e) => {
+      const nome = e.empresa && e.empresa !== e.codigo ? e.empresa : e.setor;
+      return `<option value="${e.codigo}">${nome.replace(/"/g, '')}</option>`;
+    })
     .join('');
 
   const sel = document.getElementById('filtro-setor');
@@ -667,7 +723,14 @@ function importarCsv(texto) {
       dy: null,
     };
 
-    const base = estado.base.find((b) => b.codigo === codigo);
+    // casa por código + grupo antes de por código só: o próprio export leva a
+    // coluna GRUPO, e sem ela um ELET3 da aba Geral sobrescreveria o da Energia
+    const grupo = pega(idx.setor);
+    const base =
+      (grupo && estado.base.find((b) => b.codigo === codigo && b.setor === grupo)) ||
+      estado.base.find((b) => b.codigo === codigo && b.completa) ||
+      estado.base.find((b) => b.codigo === codigo);
+
     if (base) {
       ed.editadas[base.id] = Object.assign({}, base, reg);
       ed.removidas = ed.removidas.filter((r) => r !== base.id);
@@ -758,13 +821,13 @@ function ligarEventos() {
 
   const abrirLinha = (tr) => {
     if (!tr) return;
+    // Abre exatamente a linha clicada: procurar de novo pelo código traria
+    // a outra empresa de mesmo ticker que existe na outra aba da planilha.
     const e = estado.empresas.find((x) => x.id === tr.dataset.id);
     if (!e) return;
-    estado.idAtual = e.id;
-    escreverFormulario(e);
     document.querySelector('.aba[data-aba="calculadora"]').click();
+    abrirEmpresa(e);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    carregarEmpresa(e.codigo);
   };
 
   const corpo = document.querySelector('#tabela tbody');

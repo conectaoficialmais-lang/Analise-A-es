@@ -374,6 +374,17 @@ input::placeholder { color: var(--texto-fraquinho); }
 
 .dica-inline { margin-left: 5px; }
 
+.nota-anotada {
+  margin: 14px 0 0;
+  padding: 9px 12px;
+  border-radius: var(--raio-p);
+  background: var(--fundo-fundo);
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--texto-fraco);
+}
+.nota-anotada strong { color: var(--texto); font-weight: 600; }
+
 .nota-pequena {
   margin: 14px 0 0;
   font-size: 12px;

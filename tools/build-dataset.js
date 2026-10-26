@@ -78,10 +78,9 @@ for (const { r, cells } of wb.Planilha1) {
     totalPapeis: toNumber(cells[7]),
     preco: null,
     dy: null,
-    lpa: null,
-    pl: null,
-    vpa: null,
-    pvp: null,
+    // LPA, P/L, VPA e P/VP eram digitados a mao na planilha. Ficam separados dos
+    // calculados pelo app, que tem os mesmos nomes e sobrescreveriam estes.
+    anotado: null,
     obs: null,
     planilha: { valorReal: toNumber(cells[8]), precoJusto: toNumber(cells[9]) },
   };
@@ -146,10 +145,15 @@ for (const { r, cells } of wb.ENERGIA) {
     totalPapeis: toNumber(cells[13]),
     preco: toNumber(cells[7]) || null, // EMAE3 veio 0 e POWE3/ENMA3B vieram #N/A
     dy,
-    lpa: toNumber(cells[3]),
-    pl: toNumber(cells[4]),
-    vpa: toNumber(cells[5]),
-    pvp: toNumber(cells[6]),
+    anotado: (() => {
+      const a = {
+        lpa: toNumber(cells[3]),
+        pl: toNumber(cells[4]),
+        vpa: toNumber(cells[5]),
+        pvp: toNumber(cells[6]),
+      };
+      return Object.values(a).some((v) => v !== null) ? a : null;
+    })(),
     obs: obs.length ? obs.join(' ') : null,
     planilha: { valorReal: toNumber(cells[14]), precoJusto: toNumber(cells[15]) },
   });
